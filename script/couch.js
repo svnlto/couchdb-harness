@@ -15,7 +15,7 @@
 
 function CouchDB(name, httpHeaders) {
   this.name = name;
-  this.uri = "/" + encodeURIComponent(name) + "/";
+  this.uri = "/" + encodeURIComponent(name);
 
   // The XMLHttpRequest object from the most recent request. Callers can
   // use this to check result http status and headers.
@@ -50,7 +50,7 @@ function CouchDB(name, httpHeaders) {
       doc._id = CouchDB.newUuids(1)[0];
     }
     http_headers = http_headers || {};
-    this.last_req = this.request("PUT", this.uri  +
+    this.last_req = this.request("PUT", this.uri + "/" +
         encodeURIComponent(doc._id) + encodeOptions(options),
         {body: JSON.stringify(doc), headers: http_headers});
     CouchDB.maybeThrowError(this.last_req);
@@ -61,7 +61,7 @@ function CouchDB(name, httpHeaders) {
 
   // Open a document from the database
   this.open = function(docId, url_params, http_headers) {
-    this.last_req = this.request("GET", this.uri + encodeURIComponent(docId)
+    this.last_req = this.request("GET", this.uri  + "/" + encodeURIComponent(docId)
       + encodeOptions(url_params), {headers:http_headers});
     if (this.last_req.status == 404) {
       return null;
@@ -72,7 +72,7 @@ function CouchDB(name, httpHeaders) {
 
   // Deletes a document from the database
   this.deleteDoc = function(doc) {
-    this.last_req = this.request("DELETE", this.uri + encodeURIComponent(doc._id)
+    this.last_req = this.request("DELETE", this.uri + "/" + encodeURIComponent(doc._id)
       + "?rev=" + doc._rev);
     CouchDB.maybeThrowError(this.last_req);
     var result = JSON.parse(this.last_req.responseText);
@@ -83,7 +83,7 @@ function CouchDB(name, httpHeaders) {
 
   // Deletes an attachment from a document
   this.deleteDocAttachment = function(doc, attachment_name) {
-    this.last_req = this.request("DELETE", this.uri + encodeURIComponent(doc._id)
+    this.last_req = this.request("DELETE", this.uri + "/" + encodeURIComponent(doc._id)
       + "/" + attachment_name + "?rev=" + doc._rev);
     CouchDB.maybeThrowError(this.last_req);
     var result = JSON.parse(this.last_req.responseText);
@@ -111,7 +111,7 @@ function CouchDB(name, httpHeaders) {
     for (var option in options) {
       json[option] = options[option];
     }
-    this.last_req = this.request("POST", this.uri + "_bulk_docs", {
+    this.last_req = this.request("POST", this.uri + "/" + "_bulk_docs", {
       body: JSON.stringify(json)
     });
     if (this.last_req.status == 417) {
@@ -130,7 +130,7 @@ function CouchDB(name, httpHeaders) {
   };
 
   this.ensureFullCommit = function() {
-    this.last_req = this.request("POST", this.uri + "_ensure_full_commit");
+    this.last_req = this.request("POST", this.uri + "/" + "_ensure_full_commit");
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
@@ -156,7 +156,7 @@ function CouchDB(name, httpHeaders) {
         body.options = options.options;
         delete options.options;
     }
-    this.last_req = this.request("POST", this.uri + "_temp_view"
+    this.last_req = this.request("POST", this.uri + "/" + "_temp_view"
       + encodeOptions(options), {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(body)
@@ -167,7 +167,7 @@ function CouchDB(name, httpHeaders) {
 
   this.view = function(viewname, options, keys) {
     var viewParts = viewname.split('/');
-    var viewPath = this.uri + "_design/" + viewParts[0] + "/_view/"
+    var viewPath = this.uri  + "/" + "_design/" + viewParts[0] + "/_view/"
         + viewParts[1] + encodeOptions(options);
     if(!keys) {
       this.last_req = this.request("GET", viewPath);
@@ -186,24 +186,24 @@ function CouchDB(name, httpHeaders) {
 
   // gets information about the database
   this.info = function() {
-    this.last_req = this.request("GET", this.uri);
+    this.last_req = this.request("GET", this.uri + "/");
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
 
   // gets information about a design doc
   this.designInfo = function(docid) {
-    this.last_req = this.request("GET", this.uri + docid + "/_info");
+    this.last_req = this.request("GET", this.uri  + "/" + docid + "/_info");
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
 
   this.allDocs = function(options,keys) {
     if(!keys) {
-      this.last_req = this.request("GET", this.uri + "_all_docs"
+      this.last_req = this.request("GET", this.uri  + "/" + "_all_docs"
         + encodeOptions(options));
     } else {
-      this.last_req = this.request("POST", this.uri + "_all_docs"
+      this.last_req = this.request("POST", this.uri  + "/" + "_all_docs"
         + encodeOptions(options), {
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({keys:keys})
@@ -218,20 +218,20 @@ function CouchDB(name, httpHeaders) {
   };
 
   this.changes = function(options) {
-    this.last_req = this.request("GET", this.uri + "_changes"
+    this.last_req = this.request("GET", this.uri  + "/" + "_changes"
       + encodeOptions(options));
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
 
   this.compact = function() {
-    this.last_req = this.request("POST", this.uri + "_compact");
+    this.last_req = this.request("POST", this.uri + "/" + "_compact");
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
 
   this.viewCleanup = function() {
-    this.last_req = this.request("POST", this.uri + "_view_cleanup");
+    this.last_req = this.request("POST", this.uri + "/" + "_view_cleanup");
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
@@ -245,13 +245,13 @@ function CouchDB(name, httpHeaders) {
   };
 
   this.getDbProperty = function(propId) {
-    this.last_req = this.request("GET", this.uri + propId);
+    this.last_req = this.request("GET", this.uri + "/" + propId);
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
 
   this.setSecObj = function(secObj) {
-    this.last_req = this.request("PUT", this.uri + "_security",{
+    this.last_req = this.request("PUT", this.uri + "/" + "_security",{
       body:JSON.stringify(secObj)
     });
     CouchDB.maybeThrowError(this.last_req);
@@ -259,7 +259,7 @@ function CouchDB(name, httpHeaders) {
   };
 
   this.getSecObj = function() {
-    this.last_req = this.request("GET", this.uri + "_security");
+    this.last_req = this.request("GET", this.uri + "/" + "_security");
     CouchDB.maybeThrowError(this.last_req);
     return JSON.parse(this.last_req.responseText);
   };
